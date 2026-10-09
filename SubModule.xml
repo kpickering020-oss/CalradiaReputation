@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Module>
+  <Name value="CalradiaReputation" />
+  <Id value="CalradiaReputation" />
+  <Version value="v1.0.0" />
+  <SingleplayerModule value="true" />
+  <MultiplayerModule value="false" />
+  <Official value="false" />
+  <DependedModules>
+    <DependedModule Id="Native" />
+    <DependedModule Id="SandBoxCore" />
+    <DependedModule Id="Sandbox" />
+  </DependedModules>
+  <SubModules>
+    <SubModule>
+      <Name value="CalradiaReputation" />
+      <DLLName value="CalradiaReputation.dll" />
+      <SubModuleClassType value="CalradiaReputation.SubModule" />
+    </SubModule>
+  </SubModules>
+</Module>

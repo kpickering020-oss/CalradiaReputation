@@ -1,0 +1,68 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace CalradiaReputation
+{
+    public sealed class NicknameEvaluator
+    {
+        private readonly NicknameRegistry _registry;
+
+        public NicknameEvaluator(NicknameRegistry registry)
+        {
+            _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+        }
+
+        public NicknameClaim Evaluate(string currentNicknameId, ReputationState state, bool isFemale, int campaignDay)
+        {
+            if (state == null)
+            {
+                throw new ArgumentNullException(nameof(state));
+            }
+
+            state.EnsureInitialized();
+
+            var bestCandidate = _registry.GetAll()
+                .Where(def => !string.Equals(def.Id, currentNicknameId, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(def => def.Priority)
+                .FirstOrDefault();
+
+            if (bestCandidate == null)
+            {
+                return null;
+            }
+
+            var score = (state.GetMetric(ReputationMetrics.Warrior) * 0.35f)
+                + (state.GetMetric(ReputationMetrics.Generalship) * 0.30f)
+                + (state.GetMetric(ReputationMetrics.Conquest) * 0.20f)
+                + (state.GetMetric(ReputationMetrics.Tournament) * 0.25f)
+                + (state.GetMetric(ReputationMetrics.Charisma) * 0.10f)
+                + (state.GetMetric(ReputationMetrics.Rulership) * 0.15f);
+
+            var evidence = new List<string>
+            {
+                "career_history",
+                "military_presence",
+                "notable_deeds",
+                "campaign_days=" + campaignDay
+            };
+
+            var claim = new NicknameClaim
+            {
+                NicknameId = bestCandidate.Id,
+                Score = score + bestCandidate.ClaimScore,
+                Resistance = bestCandidate.ReplacementResistance,
+                CampaignDay = campaignDay,
+                Evidence = evidence
+            };
+
+            var threshold = 15f + claim.Resistance;
+            if (claim.IsEligibleForReplacement(currentNicknameId, threshold))
+            {
+                return claim;
+            }
+
+            return null;
+        }
+    }
+}

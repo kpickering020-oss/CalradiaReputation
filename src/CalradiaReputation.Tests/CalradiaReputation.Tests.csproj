@@ -1,0 +1,45 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Xunit;
+
+namespace CalradiaReputation.Tests
+{
+    public class ReputationStateTests
+    {
+        [Fact]
+        public void AddsMetricScoresAndHistoricalPeaks()
+        {
+            var state = new ReputationState();
+            state.AddScore(ReputationMetrics.Warrior, 10f, 1f, "test");
+            state.AddScore(ReputationMetrics.Warrior, 5f, 1f, "test");
+
+            Assert.Equal(15f, state.GetMetric(ReputationMetrics.Warrior), 3);
+            Assert.True(state.HistoricalPeaks[ReputationMetrics.Warrior] >= 15f);
+        }
+
+        [Fact]
+        public void NicknameEvaluatorRespectsReplacementThreshold()
+        {
+            var registry = new NicknameRegistry();
+            var evaluator = new NicknameEvaluator(registry);
+            var state = new ReputationState();
+            state.AddScore(ReputationMetrics.Warrior, 30f, 1f, "test");
+            state.AddScore(ReputationMetrics.Generalship, 20f, 1f, "test");
+            state.AddScore(ReputationMetrics.Conquest, 15f, 1f, "test");
+            state.AddScore(ReputationMetrics.Tournament, 10f, 1f, "test");
+
+            var claim = evaluator.Evaluate("wolf", state, false, 300);
+            Assert.NotNull(claim);
+            Assert.True(claim.Score > 15f + claim.Resistance);
+        }
+
+        [Fact]
+        public void RegistryContainsExpectedDefinitions()
+        {
+            var registry = new NicknameRegistry();
+            Assert.NotEmpty(registry.GetAll());
+            Assert.Contains(registry.GetAll(), x => x.Id == "iron_general");
+        }
+    }
+}
